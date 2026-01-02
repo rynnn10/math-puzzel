@@ -3,8 +3,7 @@
 
 // 1. Audio Background (BGM)
 let bgmAudio = new Audio();
-bgmAudio.src =
-  "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Three_Chain_Links/Phantoms/Three_Chain_Links_-_10_-_Phantoms.mp3";
+bgmAudio.src = "bgm.mp3";
 bgmAudio.loop = true;
 bgmAudio.volume = 0.5;
 
