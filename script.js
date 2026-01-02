@@ -1372,7 +1372,16 @@ function openSettings(context) {
     exitBtn.className = "menu-action-btn btn-exit";
     exitBtn.innerHTML = '<i class="fa-solid fa-door-open"></i> KELUAR GAME';
     exitBtn.onclick = function () {
-      if (confirm("Yakin ingin keluar?")) window.close();
+      // Tutup modal settings dulu agar tidak tumpang tindih
+      closeSettings();
+
+      // Panggil popup konfirmasi keren
+      showCustomConfirm("Yakin ingin menutup aplikasi?", function () {
+        // Aksi jika user pilih YA
+        window.close();
+        // Note: window.close() hanya bekerja di apk/pwa terinstall,
+        // di browser biasa mungkin diblokir demi keamanan.
+      });
     };
     actionContainer.appendChild(exitBtn);
   } else if (context === "game") {
@@ -1428,31 +1437,56 @@ function closeSettings() {
   }
 }
 
-function reportBug() {
+// --- UPDATE FUNGSI REPORT BUG (CLIPBOARD FEATURE) ---
+async function reportBug() {
+  // 1. Buat input file virtual
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
 
-  input.onchange = (e) => {
+  input.onchange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Gunakan Custom Popup (showAlert) bukan alert biasa
-      showAlert(
-        "FOTO TERLAMPIR 📸",
-        "Anda akan diarahkan ke WhatsApp. Silakan tempel/kirim foto tadi secara manual di chat."
-      );
+      let pesanStatus = "Silakan pilih foto manual di WhatsApp.";
 
-      // Delay sedikit agar popup terbaca sebelum pindah aplikasi
+      // 2. COBA SALIN GAMBAR KE CLIPBOARD (Fitur Modern)
+      try {
+        // Cek apakah browser mendukung penyalinan gambar
+        if (navigator.clipboard && navigator.clipboard.write) {
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              [file.type]: file,
+            }),
+          ]);
+          pesanStatus =
+            "Foto telah DISALIN! Tekan lama di kolom chat WA lalu pilih TEMPEL/PASTE.";
+        }
+      } catch (err) {
+        console.warn("Gagal menyalin ke clipboard:", err);
+        // Fallback jika HP tidak mendukung copy gambar via web
+        pesanStatus =
+          "Browser tidak mengizinkan copy otomatis. Lampirkan foto secara manual.";
+      }
+
+      // 3. Tampilkan Pesan Instruksi
+      showAlert("MENUJU WHATSAPP 🚀", pesanStatus);
+
+      // 4. Buka WhatsApp setelah jeda
       setTimeout(() => {
         const phone = "6282275894842";
-        const text = `Halo Admin, saya ${userProfile.name} dari ${userProfile.country}. Saya ingin lapor bug.`;
+        // Tambahkan detail perangkat agar report lebih berguna
+        const deviceInfo = `Device: ${navigator.platform}, UserAgent: ${navigator.userAgent}`;
+        const text = `Halo Admin, saya ${userProfile.name} dari ${userProfile.country}. Saya ingin lapor bug.\n\n(Info Perangkat: ${deviceInfo})\n\n[Mohon lampirkan screenshot di sini]`;
+
         window.open(
           `https://wa.me/${phone}?text=${encodeURIComponent(text)}`,
           "_blank"
         );
-      }, 2000);
+      }, 2500); // Waktu baca diperlama sedikit jadi 2.5 detik
     }
   };
+
+  // Pemicu dialog file
   input.click();
 }
 
@@ -1911,15 +1945,18 @@ function playSound(type) {
       break;
 
     case "ui-click":
-      // --- PERBAIKAN UTAMA DI SINI ---
-      // Suara Klik UI (High Pitch Sine - Sangat Pendek & Bersih)
+      // Suara Klik UI (Diperkeras & Dipertebal)
       osc.type = "sine";
-      osc.frequency.setValueAtTime(800, now); // Frekuensi tinggi
-      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
-      gainNode.gain.setValueAtTime(vol * 0.5, now); // Volume agak pelan biar tidak kaget
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      // Frekuensi sedikit diturunkan agar lebih "berbobot"
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(1000, now + 0.08);
+
+      // VOLUME BOOST: Naikkan dari 0.5 menjadi 3.0
+      gainNode.gain.setValueAtTime(vol * 3.0, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
       osc.start(now);
-      osc.stop(now + 0.05);
+      osc.stop(now + 0.08);
       break;
 
     case "popup":

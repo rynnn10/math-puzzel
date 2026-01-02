@@ -51,7 +51,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(15, 12, 41, 0.85);
+  background: #0f0c29; /* Warna solid agar ringan */
   backdrop-filter: blur(10px);
   z-index: 50;
   display: flex;
@@ -151,7 +151,7 @@ body {
 /* --- GRID SYSTEM (PERBAIKAN UTAMA) --- */
 .grid {
   display: grid; /* WAJIB ADA AGAR JADI KOTAK-KOTAK */
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.5);
   padding: 10px;
   border-radius: 15px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -430,7 +430,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(8px);
   z-index: 1000;
   display: flex;
@@ -607,28 +607,32 @@ body {
   background: radial-gradient(circle at center, #1a1a2e 0%, #0f0c29 100%);
 }
 
+/* --- OPTIMASI PERFORMANCE BACKGROUND --- */
 .bg-shape {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px); /* KUNCI ANIMASI KEREN: Blur tinggi */
-  opacity: 0.6;
+  /* HAPUS filter: blur(60px); -> INI BERAT */
+  /* GANTI DENGAN GRADIENT (RINGAN) */
+  background: radial-gradient(circle, var(--color) 0%, transparent 70%);
+  opacity: 0.4; /* Kurangi opacity agar tidak terlalu silau */
+  will-change: transform; /* Memberitahu browser agar merender di GPU */
   animation: floatOrb 25s infinite alternate ease-in-out;
 }
 
-/* Warna-warni Neon */
+/* Update warna shape menggunakan variabel CSS lokal agar lebih rapi */
 .bg-shape:nth-child(1) {
+  --color: var(--accent); /* Cyan */
   width: 300px;
   height: 300px;
-  background: var(--accent); /* Cyan */
   top: -50px;
   left: -50px;
   animation-duration: 20s;
 }
 
 .bg-shape:nth-child(2) {
+  --color: var(--tile-selected); /* Pink */
   width: 400px;
   height: 400px;
-  background: var(--tile-selected); /* Pink/Magenta */
   bottom: -100px;
   right: -100px;
   animation-duration: 25s;
@@ -636,44 +640,29 @@ body {
 }
 
 .bg-shape:nth-child(3) {
+  --color: #7b2cbf; /* Purple */
   width: 250px;
   height: 250px;
-  background: #7b2cbf; /* Purple */
   top: 40%;
   left: 30%;
   animation-duration: 30s;
   animation-delay: -10s;
-  opacity: 0.4;
 }
 
+/* Hapus shape 4, 5, 6 jika masih berat. 3 Shape biasanya sudah cukup */
 .bg-shape:nth-child(4) {
+  --color: var(--success); /* Green */
   width: 200px;
   height: 200px;
-  background: var(--success); /* Green */
   bottom: 20%;
   left: 10%;
   animation-duration: 22s;
   animation-delay: -2s;
 }
 
-.bg-shape:nth-child(5) {
-  width: 350px;
-  height: 350px;
-  background: #4361ee; /* Blue */
-  top: 10%;
-  right: 20%;
-  animation-duration: 28s;
-  animation-delay: -8s;
-}
-
+.bg-shape:nth-child(5),
 .bg-shape:nth-child(6) {
-  width: 150px;
-  height: 150px;
-  background: var(--warning); /* Yellow/Orange */
-  bottom: 10%;
-  left: 50%;
-  animation-duration: 18s;
-  animation-delay: -12s;
+  display: none; /* Sembunyikan shape berlebih untuk hemat baterai */
 }
 
 /* Keyframes Gerakan Mengambang */
