@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Math Matrix - 4 in 1 Ultimate</title>
+    <link rel="icon" href="data:," />
+    <link rel="manifest" href="manifest.json" />
+
+    <meta name="theme-color" content="#0f0c29" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="bg-animation" id="bg-anim">
+      <div class="bg-shape"></div>
+      <div class="bg-shape"></div>
+      <div class="bg-shape"></div>
+      <div class="bg-shape"></div>
+      <div class="bg-shape"></div>
+      <div class="bg-shape"></div>
+    </div>
+
+    <div id="loading-overlay">
+      <div class="loader-content">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">MEMUAT GAME...</div>
+      </div>
+    </div>
+
+    <div class="main-header-controls">
+      <button class="settings-btn-main" onclick="openSettings('menu')">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+
+      <div class="profile-btn-wrapper" onclick="openProfile()">
+        <span id="main-profile-name">PLAYER</span>
+        <div class="profile-img-small" id="main-profile-img">
+          <i class="fa-solid fa-user"></i>
+        </div>
+      </div>
+    </div>
+
+    <div id="main-menu">
+      <div class="logo">
+        <i class="fa-solid fa-atom logo-bg-icon"></i>
+        MATH<br />MATRIX
+      </div>
+
+      <div class="mode-card" onclick="startGame('arcade')">
+        <div class="mode-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div class="mode-info">
+          <h3>ARCADE BLITZ</h3>
+          <p>Cepat & Tanpa Batas.</p>
+          <p class="highscore-label">Best: <span id="hs-arcade">0</span></p>
+        </div>
+      </div>
+
+      <div class="mode-card" onclick="startGame('puzzle')">
+        <div class="mode-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
+        <div class="mode-info">
+          <h3>LOGIC PUZZLE</h3>
+          <p>Bersihkan papan.</p>
+          <p class="highscore-label">Best: <span id="hs-puzzle">0</span></p>
+        </div>
+      </div>
+
+      <div class="mode-card" onclick="startGame('equation')">
+        <div class="mode-icon">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <div class="mode-info">
+          <h3>EQUATION</h3>
+          <p>Temukan yang hilang.</p>
+          <p class="highscore-label">Best: <span id="hs-equation">0</span></p>
+        </div>
+      </div>
+
+      <div
+        class="mode-card"
+        style="border-color: var(--success)"
+        onclick="startGame('crossmath')"
+      >
+        <div class="mode-icon"><i class="fa-solid fa-calculator"></i></div>
+        <div class="mode-info">
+          <h3 style="color: var(--success)">CROSSMATH</h3>
+          <p>TTS Matematika.</p>
+          <p class="highscore-label">Best: <span id="hs-crossmath">0</span></p>
+        </div>
+      </div>
+      <div class="copyright-footer">
+        &copy; Riyan 2026. All Rights Reserved.
+      </div>
+    </div>
+
+    <div class="game-container">
+      <div class="header">
+        <button class="back-btn" onclick="openSettings('game')">
+          <i class="fa-solid fa-bars"></i> MENU
+        </button>
+        <span id="score-el">SCORE: 0</span>
+      </div>
+      <div id="target-box" class="target-box">
+        <div
+          style="
+            font-size: 0.8rem;
+            opacity: 0.7;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+          "
+        >
+          Target Sum
+        </div>
+        <div id="target-val" class="target-number">0</div>
+        <div
+          id="current-sum"
+          style="color: var(--accent); height: 20px; font-weight: bold"
+        >
+          Current: 0
+        </div>
+      </div>
+
+      <div id="equation-box" class="equation-box"></div>
+
+      <div
+        id="cross-info"
+        style="
+          display: none;
+          text-align: center;
+          color: var(--success);
+          font-weight: bold;
+          margin-bottom: 10px;
+          text-shadow: 0 0 5px var(--success);
+        "
+      >
+        PILIH ANGKA & LETAKKAN
+      </div>
+
+      <div class="grid" id="grid"></div>
+
+      <div id="numpad"></div>
+      <div id="timer-bar-container" style="display: none; margin-bottom: 15px">
+        <div id="timer-bar"></div>
+      </div>
+      <div class="game-footer">
+        <button
+          id="shuffle-btn"
+          class="btn-action"
+          style="display: none"
+          onclick="shuffleBoard()"
+        >
+          <i class="fa-solid fa-dice"></i> ACAK (3)
+        </button>
+
+        <button
+          id="hint-btn"
+          class="hint-btn"
+          style="display: none"
+          onclick="useHint()"
+        >
+          <i class="fa-solid fa-lightbulb"></i>
+          <div id="hint-count" class="hint-badge">3</div>
+        </button>
+      </div>
+
+      <div
+        style="
+          text-align: center;
+          opacity: 0.5;
+          font-size: 0.8rem;
+          margin-top: 5px;
+          letter-spacing: 1px;
+        "
+        id="level-info"
+      >
+        Level 1
+      </div>
+    </div>
+
+    <div id="resume-modal" class="modal">
+      <div class="modal-content">
+        <h1>GAME DITEMUKAN</h1>
+        <p id="resume-msg">
+          Sepertinya kamu belum menyelesaikan permainan sebelumnya.
+        </p>
+        <div class="resume-options">
+          <button class="big-btn" onclick="confirmResume()">LANJUTKAN</button>
+          <button class="secondary-btn" onclick="confirmNewGame()">
+            MULAI BARU
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-over-modal" class="modal">
+      <div class="modal-content">
+        <h1 id="modal-title">LEVEL UP!</h1>
+        <p id="modal-msg">Score: 0</p>
+        <div class="resume-options">
+          <button class="big-btn" onclick="restartGame()">LANJUT</button>
+          <button class="secondary-btn" onclick="goToMenu()">MENU UTAMA</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="alert-modal" class="modal">
+      <div class="modal-content">
+        <h1 id="alert-title">OOPS!</h1>
+        <p id="alert-msg">Kesempatan habis.</p>
+        <button class="big-btn" onclick="closeAlert()">OKE</button>
+      </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+      <div class="modal-content settings-content">
+        <h1 style="text-align: center; margin-bottom: 20px">
+          <i class="fa-solid fa-sliders" style="color: var(--accent)"></i>
+          PENGATURAN
+        </h1>
+
+        <div class="setting-group">
+          <span class="setting-label">
+            <i class="fa-solid fa-headphones-simple settings-icon"></i> MUSIK &
+            SUARA
+          </span>
+
+          <div style="margin-bottom: 15px">
+            <span
+              style="
+                font-size: 0.8rem;
+                color: #aaa;
+                display: block;
+                margin-bottom: 5px;
+              "
+            >
+              <i class="fa-solid fa-music"></i> Musik Latar
+            </span>
+            <div class="volume-control">
+              <i
+                id="bgm-icon"
+                class="fa-solid fa-volume-high volume-icon"
+                onclick="toggleMute('bgm')"
+                style="cursor: pointer"
+              ></i>
+              <input
+                type="range"
+                id="bgm-slider"
+                class="volume-slider"
+                min="0"
+                max="1"
+                step="0.1"
+                value="0.5"
+                oninput="updateVolume('bgm')"
+              />
+            </div>
+          </div>
+
+          <div>
+            <span
+              style="
+                font-size: 0.8rem;
+                color: #aaa;
+                display: block;
+                margin-bottom: 5px;
+              "
+            >
+              <i class="fa-solid fa-bolt"></i> Efek Suara
+            </span>
+            <div class="volume-control">
+              <i
+                id="sfx-icon"
+                class="fa-solid fa-volume-high volume-icon"
+                onclick="toggleMute('sfx')"
+                style="cursor: pointer"
+              ></i>
+              <input
+                type="range"
+                id="sfx-slider"
+                class="volume-slider"
+                min="0"
+                max="1"
+                step="0.1"
+                value="1"
+                oninput="updateVolume('sfx')"
+              />
+            </div>
+          </div>
+        </div>
+        <div id="setting-actions"></div>
+
+        <button class="menu-action-btn btn-report" onclick="reportBug()">
+          <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem"></i> LAPOR
+          BUG
+        </button>
+
+        <button
+          class="secondary-btn"
+          style="margin-top: 15px"
+          onclick="closeSettings()"
+        >
+          TUTUP
+        </button>
+      </div>
+    </div>
+
+    <div id="profile-modal" class="modal">
+      <div class="modal-content settings-content">
+        <h2 style="text-align: center; margin-bottom: 20px">PROFIL PEMAIN</h2>
+
+        <div class="profile-edit-section">
+          <div
+            class="profile-img-large"
+            onclick="document.getElementById('upload-profile').click()"
+          >
+            <img id="preview-profile" src="" style="display: none" />
+            <i id="default-profile-icon" class="fa-solid fa-camera"></i>
+          </div>
+          <input
+            type="file"
+            id="upload-profile"
+            accept="image/*"
+            style="display: none"
+            onchange="handleProfileUpload(this)"
+          />
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">NAMA (MAX 12 HURUF)</span>
+          <input
+            type="text"
+            id="profile-name"
+            class="setting-input"
+            placeholder="NAMA KAMU..."
+            maxlength="12"
+            style="text-transform: uppercase"
+          />
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">ASAL DAERAH</span>
+
+          <select
+            id="country-select"
+            class="setting-input"
+            onchange="populateProvinces()"
+          >
+            <option value="">Pilih Negara</option>
+            <option value="Indonesia">Indonesia</option>
+            <option value="Malaysia">Malaysia</option>
+            <option value="Singapore">Singapore</option>
+            <option value="USA">USA</option>
+            <option value="Japan">Japan</option>
+            <option value="South Korea">South Korea</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="India">India</option>
+            <option value="Australia">Australia</option>
+          </select>
+
+          <select id="province-select" class="setting-input">
+            <option value="">Pilih Provinsi/Daerah</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">PENCAPAIAN TERTINGGI</span>
+          <div id="profile-highscores" class="profile-hs-grid"></div>
+        </div>
+
+        <button class="big-btn" onclick="saveProfile()">SIMPAN</button>
+        <button
+          class="secondary-btn"
+          style="margin-top: 10px"
+          onclick="closeProfile()"
+        >
+          BATAL
+        </button>
+      </div>
+    </div>
+
+    <div id="confirm-modal" class="modal">
+      <div class="modal-content">
+        <i
+          class="fa-solid fa-circle-question"
+          style="font-size: 3rem; color: var(--accent); margin-bottom: 15px"
+        ></i>
+        <h2 id="confirm-title">KONFIRMASI</h2>
+        <p id="confirm-msg">Yakin ingin kembali?</p>
+        <div class="resume-options">
+          <button class="big-btn" id="confirm-yes-btn">YA, KEMBALI</button>
+          <button class="secondary-btn" onclick="closeCustomConfirm()">
+            BATAL
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="info-modal" class="modal">
+      <div class="modal-content settings-content">
+        <h1 style="text-align: center; margin-bottom: 15px">
+          <i class="fa-solid fa-circle-info" style="color: var(--accent)"></i>
+          INFO GAME
+        </h1>
+
+        <div
+          class="dev-info"
+          style="
+            text-align: justify;
+            height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+          "
+        >
+          <h3
+            style="
+              color: var(--warning);
+              border-bottom: 1px solid #555;
+              padding-bottom: 5px;
+            "
+          >
+            CARA BERMAIN
+          </h3>
+          <p><strong>Arcade:</strong> Hitung cepat sebelum waktu habis!</p>
+          <p><strong>Puzzle:</strong> Habiskan semua kotak menjadi target.</p>
+          <p><strong>Equation:</strong> Lengkapi persamaan matematika.</p>
+          <p><strong>Crossmath:</strong> Isi Teka-Teki Silang Angka.</p>
+          <br />
+          <h3
+            style="
+              color: var(--success);
+              border-bottom: 1px solid #555;
+              padding-bottom: 5px;
+            "
+          >
+            TENTANG DEVELOPER
+          </h3>
+          <p>
+            Game ini dikembangkan untuk melatih ketangkasan logika matematika.
+          </p>
+          <p><strong>Versi:</strong> 2.0 (Neon Update)</p>
+          <p><strong>Developer:</strong> Riyan</p>
+          <p><strong>Tahun:</strong> 2026</p>
+        </div>
+
+        <button
+          class="secondary-btn"
+          style="margin-top: 15px"
+          onclick="closeInfo()"
+        >
+          TUTUP
+        </button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          // Dummy service worker registration untuk memicu "Add to Home Screen"
+          // Tidak perlu file sw.js asli untuk trigger install di localhost/file
+          navigator.serviceWorker.register("sw.js").catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>

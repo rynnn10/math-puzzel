@@ -1,0 +1,1294 @@
+:root {
+  --bg-color: #0f0c29;
+  --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  --grid-bg: rgba(255, 255, 255, 0.05);
+  --tile-color: rgba(255, 255, 255, 0.1);
+  --tile-selected: #ff0055; /* Neon Pink */
+  --accent: #00d4ff; /* Neon Cyan */
+  --warning: #ffcc00; /* Neon Yellow */
+  --success: #00ff9d; /* Neon Green */
+  --text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background: var(--bg-gradient);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  color: #ffffff;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
+}
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* --- MENU --- */
+#main-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 12, 41, 0.85);
+  backdrop-filter: blur(10px);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+#main-menu.slide-up {
+  transform: translateY(-100%);
+}
+
+.logo {
+  font-size: 3.5rem;
+  font-weight: 900;
+  margin-bottom: 30px;
+  background: linear-gradient(to right, var(--accent), var(--tile-selected));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  letter-spacing: 2px;
+}
+
+.mode-card {
+  background: rgba(255, 255, 255, 0.05);
+  width: 85%;
+  max-width: 340px;
+  padding: 15px 20px;
+  margin: 8px 0;
+  border-radius: 20px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.mode-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent);
+  opacity: 0.5;
+  transition: 0.2s;
+}
+
+.mode-card:hover {
+  transform: translateX(10px);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+}
+
+.mode-icon {
+  font-size: 2rem;
+  margin-right: 15px;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+}
+.mode-icon i {
+  font-size: 2rem;
+} /* FontAwesome Size */
+.mode-info h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.mode-info p {
+  margin: 5px 0 0;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+/* --- GAME CONTAINER --- */
+.game-container {
+  width: 100%;
+  max-width: 500px;
+  padding: 10px 20px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  justify-content: flex-start;
+  padding-top: 20px;
+  z-index: 10; /* Game di atas background */
+  background: transparent; /* Agar background terlihat */
+}
+
+/* --- GRID SYSTEM (PERBAIKAN UTAMA) --- */
+.grid {
+  display: grid; /* WAJIB ADA AGAR JADI KOTAK-KOTAK */
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+  margin-bottom: 10px;
+  gap: 8px; /* Jarak antar kotak default */
+  width: 100%;
+  aspect-ratio: 1; /* Pastikan grid selalu persegi */
+  align-content: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+
+/* KHUSUS CROSSMATH */
+.grid.crossmath-mode {
+  padding: 5px !important;
+  gap: 2px !important; /* Jarak lebih rapat untuk 11 kolom */
+  border: 2px solid var(--accent);
+  background: rgba(15, 12, 41, 0.95);
+}
+
+.grid.crossmath-mode .cell {
+  font-size: 0.65rem; /* Font lebih kecil agar muat */
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- TILE STYLES --- */
+.tile {
+  background: var(--tile-color);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  user-select: none;
+}
+.tile:active {
+  transform: scale(0.9);
+}
+.tile.selected {
+  background: var(--tile-selected);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 0 15px var(--tile-selected);
+  transform: translateY(-2px);
+}
+.tile.correct {
+  background: var(--success);
+  transform: scale(0);
+  opacity: 0;
+}
+
+/* --- CROSSMATH CELL STYLES --- */
+.cell {
+  color: #fff;
+  font-weight: bold;
+}
+.cell.fixed {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ccc;
+}
+.cell.operator {
+  color: var(--warning);
+  font-size: 0.9rem;
+}
+.cell.input {
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid #444;
+  color: var(--accent);
+  cursor: pointer;
+}
+.cell.empty {
+  background: transparent;
+  pointer-events: none;
+  border: none;
+}
+.cell.active-selection {
+  background: rgba(0, 212, 255, 0.3) !important;
+  border: 1px solid #00d4ff !important;
+  box-shadow: 0 0 8px #00d4ff;
+}
+.cell.active-slot {
+  border-color: var(--success);
+  box-shadow: 0 0 5px var(--success);
+}
+.cell.correct {
+  background: linear-gradient(135deg, #06d6a0, #038c69) !important;
+  border: none !important;
+}
+.cell.wrong {
+  background: linear-gradient(135deg, #ff0055, #990033) !important;
+  animation: shake 0.3s;
+}
+
+/* --- HEADER UI --- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  width: 100%;
+}
+.back-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+#score-el {
+  font-family: monospace;
+  font-weight: bold;
+  color: var(--success);
+  font-size: 1.2rem;
+}
+
+/* --- TARGET BOX --- */
+.target-box {
+  background: var(--grid-bg);
+  padding: 10px;
+  border-radius: 15px;
+  text-align: center;
+  margin-bottom: 15px;
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.1);
+  display: none;
+}
+.target-box.active {
+  display: block;
+}
+.target-number {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(to bottom, #fff, var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+  margin: 5px 0;
+}
+
+/* --- EQUATION BOX --- */
+.equation-box {
+  background: var(--grid-bg);
+  padding: 15px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  border: 1px solid var(--warning);
+  display: none;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.equation-box.active {
+  display: flex;
+}
+.eq-part {
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+}
+.eq-slot {
+  border: 2px dashed var(--warning);
+  color: var(--warning);
+  min-width: 45px;
+  text-align: center;
+  animation: pulse 1.5s infinite;
+}
+.eq-slot.filled {
+  background: var(--warning);
+  color: #000;
+  border-style: solid;
+  animation: none;
+}
+
+/* --- FOOTER & CONTROLS --- */
+.game-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: auto;
+  padding-bottom: 20px;
+  width: 100%;
+}
+
+.btn-action {
+  background: linear-gradient(45deg, var(--accent), #00a8cc);
+  color: #000;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-weight: bold;
+  box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+}
+
+.hint-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #fca311, #d68c00);
+  border: 2px solid #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+.hint-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff0055;
+  color: white;
+  font-size: 0.75rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #fff;
+}
+
+/* --- NUMPAD (BANK) --- */
+#numpad {
+  display: none; /* Default hidden */
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+}
+#numpad.active {
+  display: grid;
+} /* Grid aktif saat class active */
+
+.num-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 10px 0;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+.bank-btn.selected {
+  background: var(--accent);
+  color: #000;
+  box-shadow: 0 0 10px var(--accent);
+}
+.bank-btn.used {
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+/* --- MODALS (POPUP) --- */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden; /* Tambahkan ini agar elemen benar-benar hilang */
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease; /* Update transisi */
+  /* ------------------------------ */
+
+  padding: 20px;
+}
+.modal.show {
+  opacity: 1;
+  visibility: visible; /* Tambahkan ini */
+  pointer-events: all;
+}
+
+.modal-content {
+  background: rgba(30, 30, 40, 0.95);
+  padding: 30px;
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  width: 100%;
+  max-width: 350px;
+  transform: scale(0.9);
+  transition: transform 0.3s;
+}
+.modal.show .modal-content {
+  transform: scale(1);
+}
+
+.modal h1 {
+  font-size: 1.8rem;
+  margin: 0 0 10px 0;
+  background: linear-gradient(to right, #00d4ff, #00ff9d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-transform: uppercase;
+}
+.modal p {
+  color: #ccc;
+  margin-bottom: 25px;
+  font-size: 0.95rem;
+}
+
+.resume-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.big-btn {
+  background: linear-gradient(90deg, #00d4ff, #005bea);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: bold;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.secondary-btn {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: #aaa;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: bold;
+  width: 100%;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+/* --- TAMBAHAN UNTUK TIMER BAR ARCADE --- */
+#timer-bar-container {
+  width: 80%;
+  height: 12px; /* Memberi tinggi agar terlihat */
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  margin: 0 auto; /* Posisi tengah */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  /* Pastikan container ini tampil di atas */
+  position: relative;
+  z-index: 10;
+}
+
+#timer-bar {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #00d4ff,
+    #00ff9d
+  ); /* Warna Cyan ke Hijau */
+  width: 100%;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 10px #00ff9d; /* Efek menyala */
+}
+
+/* --- TAMPILAN HIGH SCORE DI MENU --- */
+.highscore-label {
+  font-size: 0.75rem !important; /* Lebih kecil dari deskripsi */
+  color: var(--warning) !important;
+  margin-top: 4px !important;
+  font-weight: bold;
+  letter-spacing: 1px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+/* Responsif untuk HP layar kecil */
+@media (max-width: 480px) {
+  .mode-card {
+    padding: 10px;
+  }
+  .mode-icon {
+    font-size: 1.5rem;
+    margin-right: 10px;
+  }
+  .mode-info h3 {
+    font-size: 1rem;
+  }
+  .profile-hs-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .profile-hs-item {
+    padding: 12px; /* Perbesar padding biar enak dilihat */
+  }
+}
+
+/* --- NEW: ANIMASI BACKGROUND KEREN (Floating Shapes) --- */
+/* --- ANIMASI BACKGROUND (GLOWING NEBULA) --- */
+.bg-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+  background: radial-gradient(circle at center, #1a1a2e 0%, #0f0c29 100%);
+}
+
+.bg-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px); /* KUNCI ANIMASI KEREN: Blur tinggi */
+  opacity: 0.6;
+  animation: floatOrb 25s infinite alternate ease-in-out;
+}
+
+/* Warna-warni Neon */
+.bg-shape:nth-child(1) {
+  width: 300px;
+  height: 300px;
+  background: var(--accent); /* Cyan */
+  top: -50px;
+  left: -50px;
+  animation-duration: 20s;
+}
+
+.bg-shape:nth-child(2) {
+  width: 400px;
+  height: 400px;
+  background: var(--tile-selected); /* Pink/Magenta */
+  bottom: -100px;
+  right: -100px;
+  animation-duration: 25s;
+  animation-delay: -5s;
+}
+
+.bg-shape:nth-child(3) {
+  width: 250px;
+  height: 250px;
+  background: #7b2cbf; /* Purple */
+  top: 40%;
+  left: 30%;
+  animation-duration: 30s;
+  animation-delay: -10s;
+  opacity: 0.4;
+}
+
+.bg-shape:nth-child(4) {
+  width: 200px;
+  height: 200px;
+  background: var(--success); /* Green */
+  bottom: 20%;
+  left: 10%;
+  animation-duration: 22s;
+  animation-delay: -2s;
+}
+
+.bg-shape:nth-child(5) {
+  width: 350px;
+  height: 350px;
+  background: #4361ee; /* Blue */
+  top: 10%;
+  right: 20%;
+  animation-duration: 28s;
+  animation-delay: -8s;
+}
+
+.bg-shape:nth-child(6) {
+  width: 150px;
+  height: 150px;
+  background: var(--warning); /* Yellow/Orange */
+  bottom: 10%;
+  left: 50%;
+  animation-duration: 18s;
+  animation-delay: -12s;
+}
+
+/* Keyframes Gerakan Mengambang */
+@keyframes floatOrb {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, 50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/* --- NEW: ANIMASI TRANSISI KEREN (Zoom & Fade) --- */
+#main-menu,
+.game-container {
+  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+/* Saat menu hilang (naik ke atas & scale down) */
+#main-menu.slide-up {
+  transform: translateY(-100%) scale(0.8);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.game-container.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+  position: relative;
+}
+
+/* --- NEW: MODAL PENGATURAN --- */
+.settings-content {
+  text-align: left;
+  width: 90%;
+  max-width: 400px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.setting-group {
+  margin-bottom: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: 15px;
+}
+
+.setting-label {
+  font-size: 0.9rem;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: block;
+  font-weight: bold;
+}
+
+.setting-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.volume-slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  background: #555;
+  border-radius: 5px;
+  outline: none;
+}
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+.dev-info {
+  font-size: 0.85rem;
+  color: #ccc;
+  line-height: 1.6;
+}
+
+.menu-action-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.btn-report {
+  background: #25d366;
+  color: white;
+}
+.btn-exit {
+  background: #ff0055;
+  color: white;
+}
+.btn-back-menu {
+  background: var(--warning);
+  color: black;
+}
+
+/* --- HEADER MENU UTAMA (BARU) --- */
+.main-header-controls {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 60;
+}
+
+.profile-btn-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 5px 15px 5px 5px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: 0.2s;
+}
+.profile-btn-wrapper:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.profile-img-small {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: var(--accent);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #000;
+}
+.profile-img-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#main-profile-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+/* Tombol Setting sekarang hanya icon */
+.settings-btn-main {
+  position: relative; /* Reset position absolute karena sudah di flex container */
+  top: auto;
+  left: auto;
+  width: 40px;
+  height: 40px;
+}
+
+/* --- EDIT PROFIL MODAL --- */
+.profile-edit-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.profile-img-large {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px dashed var(--accent);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+.profile-img-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.profile-img-large i {
+  font-size: 2rem;
+  color: #aaa;
+}
+
+/* Select Dropdown Style */
+select.setting-input {
+  background-color: rgba(30, 30, 40, 0.8);
+  color: white;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  margin-bottom: 10px; /* Jarak antar dropdown otomatis */
+  appearance: none; /* Hilangkan panah default browser jelek */
+  -webkit-appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300d4ff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px top 50%;
+  background-size: 12px auto;
+}
+
+select.setting-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+}
+/* --- FIX DROPDOWN & INPUT SCROLL PADA HP --- */
+/* Masalah utama di HP biasanya karena user-select: none global */
+input,
+select,
+textarea {
+  user-select: text !important; /* Izinkan seleksi teks/interaksi */
+  -webkit-user-select: text !important;
+  pointer-events: auto !important;
+}
+
+/* Pastikan Modal konten bisa di-scroll lancar */
+.settings-content {
+  -webkit-overflow-scrolling: touch; /* Smooth scroll iOS */
+  overflow-y: auto;
+  max-height: 80vh; /* Batasi tinggi agar tidak nabrak layar */
+  padding-bottom: 50px; /* Ruang extra di bawah */
+}
+
+/* --- TUKAR POSISI HEADER (Update Flex) --- */
+.main-header-controls {
+  flex-direction: row; /* Pastikan baris */
+}
+
+/* Karena kita menukar urutan HTML, Profil sekarang di kanan (anak ke-2) 
+   dan Setting di kiri (anak ke-1). Flex space-between akan otomatis 
+   memisahkan mereka ke ujung kiri dan kanan. */
+
+/* Style tambahan untuk Profil di Kanan */
+.profile-btn-wrapper {
+  flex-direction: row; /* Nama di kiri foto */
+  padding: 5px 5px 5px 15px; /* Sesuaikan padding */
+}
+
+/* Styling Modal Alert agar lebih Menarik (untuk reportBug) */
+#alert-modal .modal-content {
+  border: 2px solid var(--accent);
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+}
+#alert-title {
+  color: var(--accent);
+  font-size: 2rem;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+/* --- NEW: ANIMASI MENU ENTRANCE --- */
+/* Animasi Slide Masuk untuk Kartu Mode */
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Terapkan animasi pada kartu mode */
+.mode-card {
+  animation: cardSlideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  opacity: 0; /* Mulai dari invisible */
+}
+
+/* Delay berurutan agar muncul satu-satu */
+.mode-card:nth-child(2) {
+  animation-delay: 0.1s;
+} /* Arcade */
+.mode-card:nth-child(3) {
+  animation-delay: 0.2s;
+} /* Puzzle */
+.mode-card:nth-child(4) {
+  animation-delay: 0.3s;
+} /* Equation */
+.mode-card:nth-child(5) {
+  animation-delay: 0.4s;
+} /* Crossmath */
+
+/* Animasi Logo Berdenyut */
+@keyframes logoPulse {
+  0%,
+  100% {
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow: 0 0 40px rgba(0, 212, 255, 0.6);
+    transform: scale(1.05);
+  }
+}
+.logo {
+  animation: logoPulse 3s infinite ease-in-out;
+}
+
+/* --- NEW: ICON COLORS & ANIMATIONS --- */
+
+/* Animasi Icon Berputar/Goyang saat Hover */
+@keyframes iconWiggle {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-15deg);
+  }
+  50% {
+    transform: rotate(15deg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Efek Hover pada Mode Card */
+.mode-card:hover .mode-icon i {
+  animation: iconWiggle 0.5s ease-in-out;
+}
+
+/* WARNA ICON PER GAME MODE */
+/* Arcade (Lightning) - Kuning Neon */
+.mode-card:nth-child(2) .mode-icon i {
+  color: #fca311;
+  text-shadow: 0 0 10px #fca311;
+}
+
+/* Puzzle - Ungu Neon */
+.mode-card:nth-child(3) .mode-icon i {
+  color: #b5179e;
+  text-shadow: 0 0 10px #b5179e;
+}
+
+/* Equation (Magnifier) - Cyan Neon */
+.mode-card:nth-child(4) .mode-icon i {
+  color: #4cc9f0;
+  text-shadow: 0 0 10px #4cc9f0;
+}
+
+/* Crossmath (Calc) - Hijau Neon */
+.mode-card:nth-child(5) .mode-icon i {
+  color: #06d6a0;
+  text-shadow: 0 0 10px #06d6a0;
+}
+
+/* ICON PENGATURAN & LAINNYA */
+/* Tombol Gear Utama */
+.settings-btn-main i {
+  color: #ddd;
+  transition: 0.5s;
+}
+.settings-btn-main:hover i {
+  color: var(--accent);
+  transform: rotate(90deg); /* Putar gear saat hover */
+}
+
+/* Icon User/Profil */
+.profile-btn-wrapper i {
+  color: #fff;
+}
+
+/* Icon di dalam Modal Settings */
+.setting-group span.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Animasi halus untuk icon tombol back/menu di dalam game */
+.back-btn i {
+  transition: transform 0.3s;
+}
+.back-btn:hover i {
+  transform: rotate(180deg);
+}
+
+/* --- NEW: STYLING IKON PENGATURAN --- */
+
+/* Ikon Judul Bagian (Headphones, Astronaut) */
+.settings-icon {
+  color: var(--accent);
+  margin-right: 8px;
+  filter: drop-shadow(0 0 5px rgba(0, 212, 255, 0.5));
+  width: 20px;
+  text-align: center;
+}
+
+/* Ikon Volume Kecil di samping slider */
+.volume-icon {
+  color: #666;
+  font-size: 0.9rem;
+  width: 20px;
+  text-align: center;
+}
+
+/* Update tampilan slider agar serasi */
+.volume-control {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Tombol Lapor Bug (WA) */
+.btn-report {
+  background: linear-gradient(45deg, #25d366, #128c7e);
+  box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+  transition: transform 0.2s;
+}
+.btn-report:active {
+  transform: scale(0.98);
+}
+
+/* Ikon Gamepad di Info */
+.dev-info i {
+  transition: transform 0.5s;
+}
+.dev-info:hover .fa-gamepad {
+  transform: rotate(20deg) scale(1.1);
+  color: var(--tile-selected) !important;
+}
+
+/* [TAMBAHKAN DI BAGIAN PALING BAWAH STYLE.CSS] */
+
+/* --- LOADING SCREEN ANIMATION --- */
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-color);
+  z-index: 2000; /* Paling atas */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.3s;
+}
+#loading-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.loader-content {
+  text-align: center;
+}
+.loader-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255, 255, 255, 0.1);
+  border-top: 5px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px auto;
+}
+.loader-text {
+  color: var(--accent);
+  letter-spacing: 3px;
+  font-weight: bold;
+  animation: pulse 1s infinite;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- LOGO ENHANCEMENT --- */
+.logo {
+  position: relative;
+  z-index: 1;
+}
+.logo-bg-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 5rem;
+  color: rgba(255, 255, 255, 0.03); /* Sangat transparan di belakang */
+  z-index: -1;
+  animation: spin 20s linear infinite;
+}
+
+/* --- TOMBOL PENGATURAN UTAMA --- */
+.settings-btn-main {
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 100; /* Pastikan di atas layer lain */
+  transition: all 0.3s ease;
+}
+
+.settings-btn-main:hover {
+  background: var(--accent);
+  color: #0f0c29;
+  transform: rotate(90deg);
+  box-shadow: 0 0 20px var(--accent);
+}
+
+.settings-btn-main:active {
+  transform: scale(0.9) rotate(90deg);
+}
+
+/* --- PRESISI TOMBOL KEMBALI MENU --- */
+.menu-action-btn {
+  display: flex; /* Flexbox untuk presisi */
+  align-items: center;
+  justify-content: center;
+  gap: 12px; /* Jarak pas antara icon dan teks */
+  padding: 14px;
+  font-family: inherit;
+  text-transform: uppercase;
+}
+
+/* --- COPYRIGHT FOOTER --- */
+.copyright-footer {
+  position: absolute;
+  bottom: 20px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 1px;
+  width: 100%;
+  text-align: center;
+}
+
+/* --- PROFILE HIGH SCORE GRID --- */
+.profile-hs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.profile-hs-item {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform 0.2s;
+}
+.hs-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.hs-info {
+  display: flex;
+  flex-direction: column;
+}
+.hs-info span {
+  font-size: 0.65rem;
+  color: #aaa;
+  text-transform: uppercase;
+}
+.hs-info strong {
+  font-size: 1rem;
+  color: #fff;
+}
+
+/* --- INPUT FORCE UPPERCASE VISUAL --- */
+#profile-name {
+  text-transform: uppercase;
+}
