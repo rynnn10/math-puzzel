@@ -51,18 +51,29 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: #0f0c29; /* Warna solid agar ringan */
-  backdrop-filter: blur(10px);
+
+  /* PERUBAHAN UTAMA: Ganti warna solid (#0f0c29) menjadi transparent */
+  background: transparent;
+  /* Alternatif jika teks sulit dibaca: background: rgba(15, 12, 41, 0.6); */
+
   z-index: 50;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+
+  /* Transisi */
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  opacity: 1;
+  transform: scale(1);
+  will-change: opacity, transform;
 }
 
+/* Saat menu hilang: Sedikit membesar & transparan (Tanpa Blur) */
 #main-menu.slide-up {
-  transform: translateY(-100%);
+  opacity: 0;
+  transform: scale(1.1); /* Scale kecil (1.1) jauh lebih ringan dari 2.5 */
+  pointer-events: none;
 }
 
 .logo {
@@ -144,8 +155,25 @@ body {
   height: 100vh;
   justify-content: flex-start;
   padding-top: 20px;
-  z-index: 10; /* Game di atas background */
-  background: transparent; /* Agar background terlihat */
+  z-index: 10;
+  background: transparent;
+
+  /* State Awal: Sedikit kecil & transparan */
+  opacity: 0;
+  transform: scale(0.95); /* Scale 0.95 ke 1.0 sangat smooth */
+
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition-delay: 0.1s;
+  pointer-events: none;
+  position: absolute;
+}
+
+/* State Aktif: Normal */
+.game-container.active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: all;
+  position: relative;
 }
 
 /* --- GRID SYSTEM (PERBAIKAN UTAMA) --- */
@@ -592,6 +620,25 @@ body {
   .profile-hs-item {
     padding: 12px; /* Perbesar padding biar enak dilihat */
   }
+  #diag-ping,
+  #diag-fps,
+  #diag-logic {
+    font-size: 0.9rem !important; /* Perkecil sedikit lagi agar muat 3 kolom */
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Perkecil padding grid container di HP */
+  #diag-modal .modal-content > div {
+    gap: 5px !important;
+  }
+
+  /* Perkecil padding masing-masing kotak */
+  #diag-modal .modal-content > div > div {
+    padding: 8px 5px !important;
+  }
 }
 
 /* --- NEW: ANIMASI BACKGROUND KEREN (Floating Shapes) --- */
@@ -679,26 +726,6 @@ body {
   100% {
     transform: translate(0, 0) scale(1);
   }
-}
-
-/* --- NEW: ANIMASI TRANSISI KEREN (Zoom & Fade) --- */
-#main-menu,
-.game-container {
-  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-}
-
-/* Saat menu hilang (naik ke atas & scale down) */
-#main-menu.slide-up {
-  transform: translateY(-100%) scale(0.8);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.game-container.active {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: all;
-  position: relative;
 }
 
 /* --- NEW: MODAL PENGATURAN --- */
@@ -1280,4 +1307,253 @@ textarea {
 /* --- INPUT FORCE UPPERCASE VISUAL --- */
 #profile-name {
   text-transform: uppercase;
+}
+
+/* ========================================= */
+/* GAYA TOMBOL VOICE (REPLIKA IOT DASHBOARD) */
+/* ========================================= */
+
+/* 1. Tombol Melayang (Floating Button) */
+#btn-voice-command {
+  position: fixed;
+  bottom: 96px; /* Sesuai 'bottom-24' */
+  right: 20px; /* Sesuai 'right-5' */
+  width: 56px; /* Sesuai 'w-14' */
+  height: 56px; /* Sesuai 'h-14' */
+
+  /* Gradient Biru (from-blue-600 to-blue-500) */
+  background: linear-gradient(to right, #2563eb, #3b82f6);
+
+  /* Border & Rounded */
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+
+  /* Shadow Glowing (shadow-blue-500/50) */
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5),
+    0 4px 6px -2px rgba(59, 130, 246, 0.3);
+
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem; /* text-2xl */
+  z-index: 2000;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+#btn-voice-command:active {
+  transform: scale(0.9); /* Efek tekan */
+}
+
+/* 2. Overlay Background Gelap */
+#voice-overlay {
+  position: fixed;
+  inset: 0; /* Top, Right, Bottom, Left = 0 */
+  background-color: rgba(0, 0, 0, 0.85); /* Hitam Transparan */
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  /* Default Sembunyi */
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+/* Class untuk memunculkan overlay */
+#voice-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.voice-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* 3. Animasi Lingkaran Ping (Pulse Ring) */
+.voice-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-color: #3b82f6; /* Blue-500 */
+  opacity: 0.75;
+  z-index: 0;
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  width: 100px; /* Ukuran dasar animasi */
+  height: 100px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes ping {
+  75%,
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+/* 4. Kotak Icon Utama */
+.voice-icon-box {
+  width: 96px; /* w-24 */
+  height: 96px; /* h-24 */
+  background-color: #2563eb; /* Blue-600 */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 0 30px #2563eb; /* Shadow Glow Biru */
+  margin-bottom: 2rem;
+}
+
+.voice-icon-box i {
+  font-size: 3rem; /* text-5xl */
+  color: white;
+}
+
+/* 5. Teks Overlay */
+#voice-overlay h3 {
+  color: white;
+  font-weight: bold;
+  font-size: 1.25rem;
+  letter-spacing: 0.1em; /* tracking-widest */
+  margin-bottom: 0.5rem;
+}
+
+#voice-text-preview {
+  color: #93c5fd; /* blue-300 */
+  font-size: 0.875rem;
+  font-style: italic;
+  margin-bottom: 2rem;
+}
+
+/* 6. Tombol Batal */
+.btn-voice-cancel {
+  padding: 8px 24px;
+  background-color: #334155; /* slate-700 */
+  color: white;
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-voice-cancel:hover {
+  background-color: #475569; /* slate-600 */
+}
+
+/* Animasi Pulse untuk Icon */
+@keyframes pulse-icon {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+.animate-pulse {
+  animation: pulse-icon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* [ADD] Tambahkan di style.css */
+
+/* --- GALAXY STARS ANIMATION --- */
+/* Teknik ini menggunakan box-shadow untuk membuat banyak bintang tanpa membebani DOM */
+
+/* Wadah Bintang */
+#stars-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2; /* Di belakang background shape */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Fungsi Animasi Kedip & Gerak */
+@keyframes animStar {
+  from {
+    transform: translateY(0px);
+  }
+  to {
+    transform: translateY(-2000px);
+  }
+}
+
+/* Ukuran Kecil */
+#stars1 {
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  box-shadow: 10vw 10vh #fff, 20vw 80vh #fff, 50vw 50vh #fff, 80vw 20vh #fff,
+    90vw 90vh #fff, 15vw 45vh #fff, 75vw 15vh #fff, 35vw 65vh #fff,
+    60vw 30vh #fff, 40vw 95vh #fff, 12vw 88vh #fff, 95vw 40vh #fff,
+    55vw 12vh #fff, 25vw 35vh #fff, 5vw 55vh #fff;
+  animation: animStar 50s linear infinite;
+}
+#stars1:after {
+  content: " ";
+  position: absolute;
+  top: 2000px;
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  box-shadow: inherit; /* Copy bayangan bintang di atas */
+}
+
+/* Ukuran Sedang */
+#stars2 {
+  width: 2px;
+  height: 2px;
+  background: transparent;
+  box-shadow: 30vw 20vh #fff, 60vw 80vh #fff, 10vw 60vh #fff, 80vw 50vh #fff,
+    50vw 10vh #fff, 20vw 90vh #fff, 90vw 30vh #fff, 40vw 40vh #fff,
+    70vw 70vh #fff, 5vw 5vh #fff;
+  animation: animStar 100s linear infinite;
+  opacity: 0.6;
+}
+#stars2:after {
+  content: " ";
+  position: absolute;
+  top: 2000px;
+  width: 2px;
+  height: 2px;
+  background: transparent;
+  box-shadow: inherit;
+}
+
+/* Ukuran Besar (Sedikit saja) */
+#stars3 {
+  width: 3px;
+  height: 3px;
+  background: transparent;
+  box-shadow: 50vw 50vh #00d4ff, 20vw 20vh #ff0055, 80vw 80vh #ffcc00; /* Bintang Berwarna */
+  animation: animStar 150s linear infinite;
+  border-radius: 50%;
+  filter: blur(1px);
+}
+#stars3:after {
+  content: " ";
+  position: absolute;
+  top: 2000px;
+  width: 3px;
+  height: 3px;
+  background: transparent;
+  box-shadow: inherit;
 }

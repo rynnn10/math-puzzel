@@ -32,6 +32,12 @@
       <div class="bg-shape"></div>
     </div>
 
+    <div id="stars-container">
+      <div id="stars1"></div>
+      <div id="stars2"></div>
+      <div id="stars3"></div>
+    </div>
+
     <div id="loading-overlay">
       <div class="loader-content">
         <div class="loader-spinner"></div>
@@ -462,6 +468,144 @@
       </div>
     </div>
 
+    <div
+      id="youtube-player"
+      style="position: absolute; top: -9999px; opacity: 0; pointer-events: none"
+    ></div>
+
+    <button id="btn-voice-command" onclick="toggleVoiceCommand()">
+      <i id="mic-icon" class="fa-solid fa-microphone"></i>
+    </button>
+
+    <div id="voice-overlay">
+      <div class="voice-content">
+        <div class="voice-pulse-ring"></div>
+
+        <div class="voice-icon-box">
+          <i class="fa-solid fa-microphone-lines animate-pulse"></i>
+        </div>
+
+        <h3>MENDENGARKAN...</h3>
+        <p id="voice-text-preview">"Katakan Perintah..."</p>
+
+        <button onclick="stopVoiceCommand()" class="btn-voice-cancel">
+          Batal
+        </button>
+      </div>
+    </div>
+
+    <div id="diag-modal" class="modal">
+      <div class="modal-content" style="border: 2px solid var(--accent)">
+        <h1>SYSTEM CHECK</h1>
+
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin: 20px 0;
+          "
+        >
+          <div
+            style="
+              background: rgba(0, 0, 0, 0.3);
+              padding: 10px;
+              border-radius: 10px;
+            "
+          >
+            <i
+              class="fa-solid fa-signal"
+              style="color: var(--warning); font-size: 1.2rem"
+            ></i>
+            <div style="font-size: 0.7rem; color: #aaa; margin-top: 5px">
+              PING
+            </div>
+            <div
+              id="diag-ping"
+              style="font-size: 1.2rem; font-weight: bold; color: #fff"
+            >
+              ...
+            </div>
+          </div>
+
+          <div
+            style="
+              background: rgba(0, 0, 0, 0.3);
+              padding: 10px;
+              border-radius: 10px;
+            "
+          >
+            <i
+              class="fa-solid fa-bolt"
+              style="color: var(--success); font-size: 1.2rem"
+            ></i>
+            <div style="font-size: 0.7rem; color: #aaa; margin-top: 5px">
+              FPS
+            </div>
+            <div
+              id="diag-fps"
+              style="font-size: 1.2rem; font-weight: bold; color: #fff"
+            >
+              ...
+            </div>
+          </div>
+
+          <div
+            style="
+              background: rgba(0, 0, 0, 0.3);
+              padding: 10px;
+              border-radius: 10px;
+            "
+          >
+            <i
+              class="fa-solid fa-microchip"
+              style="color: #00d4ff; font-size: 1.2rem"
+            ></i>
+            <div style="font-size: 0.7rem; color: #aaa; margin-top: 5px">
+              LOGIC
+            </div>
+            <div
+              id="diag-logic"
+              style="font-size: 1.2rem; font-weight: bold; color: #fff"
+            >
+              ...
+            </div>
+          </div>
+        </div>
+
+        <div
+          style="
+            text-align: left;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #ccc;
+            margin-bottom: 20px;
+          "
+        >
+          <div>
+            <i class="fa-solid fa-mobile-screen"></i>
+            <span id="diag-device">-</span>
+          </div>
+          <div style="margin-top: 5px">
+            <i class="fa-solid fa-memory"></i> <span id="diag-memory">-</span>
+          </div>
+        </div>
+
+        <button class="big-btn" id="btn-retest" onclick="runSystemCheck()">
+          TEST ULANG
+        </button>
+        <button
+          class="secondary-btn"
+          style="margin-top: 10px"
+          onclick="closeDiag()"
+        >
+          TUTUP
+        </button>
+      </div>
+    </div>
+
     <script src="script.js"></script>
     <script>
       if ("serviceWorker" in navigator) {
@@ -473,4 +617,5 @@
       }
     </script>
   </body>
+  <script src="https://www.youtube.com/iframe_api"></script>
 </html>

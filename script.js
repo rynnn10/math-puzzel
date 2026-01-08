@@ -730,55 +730,80 @@ function initEquation() {
   }
 }
 
+// [REPLACE] Ganti seluruh fungsi startEquationLevel dengan ini:
+
 function startEquationLevel() {
   els.levelInfo.textContent = `EQUATION - LEVEL ${gameState.level}`;
-  // --- LOGIKA BARU: PROGRESSIVE DIFFICULTY ---
+
   let level = gameState.level;
   let a, b, ans, op;
   let operators = ["+"];
 
-  // Level 3+ muncul pengurangan, Level 6+ muncul perkalian
+  // Level 3+ muncul pengurangan
   if (level >= 3) operators.push("-");
-  if (level >= 6) operators.push("x");
+  // Level 5+ muncul perkalian
+  if (level >= 5) operators.push("x");
+  // Level 7+ muncul pembagian (BARU DITAMBAHKAN)
+  if (level >= 7) operators.push("/");
 
-  // Pilih operator acak dari yang tersedia
+  // Pilih operator acak
   op = operators[Math.floor(Math.random() * operators.length)];
 
   // Tentukan range angka berdasarkan level
-  let maxNum = 10 + level * 2; // Level 1=12, Level 10=30, dst.
+  let maxNum = 10 + level * 2;
 
   if (op === "+") {
     a = Math.floor(Math.random() * maxNum) + 1;
     b = Math.floor(Math.random() * maxNum) + 1;
     ans = a + b;
   } else if (op === "-") {
-    // Pastikan hasil tidak negatif
     a = Math.floor(Math.random() * maxNum) + 5;
     b = Math.floor(Math.random() * (a - 1)) + 1;
     ans = a - b;
   } else if (op === "x") {
-    // Perkalian angkanya lebih kecil agar tidak terlalu susah
     let maxMult = Math.min(12, 3 + Math.floor(level / 2));
     a = Math.floor(Math.random() * maxMult) + 2;
     b = Math.floor(Math.random() * maxMult) + 2;
     ans = a * b;
+  } else if (op === "/") {
+    // --- LOGIKA PEMBAGIAN (BARU) ---
+    // Agar hasil bulat: Kita tentukan Jawaban & Pembagi dulu, baru dikali jadi Soal.
+    // Contoh: Mau soal ? / 5 = 3. Maka A harus 15.
+
+    b = Math.floor(Math.random() * 10) + 2; // Pembagi (2 s.d 11)
+    ans = Math.floor(Math.random() * 10) + 2; // Jawaban (2 s.d 11)
+    a = b * ans; // Angka depan (Dividend)
   }
 
-  // Simpan data soal untuk resume & pengecekan
+  // Simpan data soal
   gameState.equationData = { a: a, b: b, answer: ans, op: op };
 
   // Update HTML Tampilan Soal
   els.eqBox.innerHTML = `<div class="eq-part">${a}</div><div class="eq-part">${op}</div><div class="eq-part">${b}</div><div class="eq-part">=</div><div class="eq-part eq-slot" id="eq-target-slot">?</div>`;
 
-  // Buat Grid Jawaban (1 Jawaban Benar + 24 Jawaban Pengecoh)
+  // Buat Grid Jawaban
   let gridVals = [ans];
   while (gridVals.length < 25) {
-    // Buat pengecoh yang dekat dengan jawaban asli (ans +/- 5) agar menantang
-    let fake = ans + Math.floor(Math.random() * 10) - 5;
-    if (fake !== ans && fake > 0) gridVals.push(fake);
-    else gridVals.push(Math.floor(Math.random() * maxNum) + 1);
+    let fake;
+    // Buat pengecoh cerdas
+    if (Math.random() > 0.5) {
+      fake = ans + Math.floor(Math.random() * 10) - 5;
+    } else {
+      fake = Math.floor(Math.random() * (level * 5)) + 1;
+    }
+
+    if (fake !== ans && fake > 0 && !gridVals.includes(fake)) {
+      gridVals.push(fake);
+    } else if (gridVals.length < 25) {
+      // Fallback jika fake angka kembar/negatif
+      gridVals.push(gridVals.length + 100);
+    }
   }
+
+  // Acak posisi
   gridVals.sort(() => Math.random() - 0.5);
+  // Potong jika kelebihan (safety)
+  if (gridVals.length > 25) gridVals = gridVals.slice(0, 25);
 
   buildGrid(gridVals);
   saveGameState();
@@ -1359,28 +1384,34 @@ function openSettings(context) {
   actionContainer.innerHTML = "";
 
   if (context === "menu") {
-    // Tombol Info Baru
+    // Tombol Info
     const infoBtn = document.createElement("button");
     infoBtn.className = "menu-action-btn";
     infoBtn.style.background = "#4cc9f0";
     infoBtn.style.color = "#000";
     infoBtn.innerHTML = '<i class="fa-solid fa-circle-info"></i> TENTANG GAME';
-    infoBtn.onclick = openInfo; // Buka popup Info baru
+    infoBtn.onclick = openInfo;
     actionContainer.appendChild(infoBtn);
+
+    // --- TOMBOL DIAGNOSTIK BARU (Check System) ---
+    const diagBtn = document.createElement("button");
+    diagBtn.className = "menu-action-btn";
+    diagBtn.style.background = "#2a2a40"; // Warna gelap elegan
+    diagBtn.style.border = "1px solid var(--accent)";
+    diagBtn.style.color = "var(--accent)";
+    diagBtn.innerHTML =
+      '<i class="fa-solid fa-microchip"></i> CEK KONEKSI & PERFORMA';
+    diagBtn.onclick = openDiagnostics; // Panggil fungsi baru
+    actionContainer.appendChild(diagBtn);
+    // ---------------------------------------------
 
     const exitBtn = document.createElement("button");
     exitBtn.className = "menu-action-btn btn-exit";
     exitBtn.innerHTML = '<i class="fa-solid fa-door-open"></i> KELUAR GAME';
     exitBtn.onclick = function () {
-      // Tutup modal settings dulu agar tidak tumpang tindih
       closeSettings();
-
-      // Panggil popup konfirmasi keren
       showCustomConfirm("Yakin ingin menutup aplikasi?", function () {
-        // Aksi jika user pilih YA
         window.close();
-        // Note: window.close() hanya bekerja di apk/pwa terinstall,
-        // di browser biasa mungkin diblokir demi keamanan.
       });
     };
     actionContainer.appendChild(exitBtn);
@@ -1888,7 +1919,7 @@ document.body.addEventListener(
   { once: true }
 ); // {once: true} artinya event ini hanya jalan sekali saja
 
-// --- SYSTEM AUDIO FINAL (Letakkan di bagian bawah script.js) ---
+// [REPLACE] Ganti seluruh fungsi playSound yang lama dengan ini:
 
 function playSound(type) {
   // 1. Cek Volume Global
@@ -1907,89 +1938,97 @@ function playSound(type) {
   gainNode.connect(audioCtx.destination);
 
   const now = audioCtx.currentTime;
-  const vol = 0.1 * sfxVolume; // Master volume control
+
+  // --- PERUBAHAN 1: BASE VOLUME DINAIKKAN (Dari 0.1 jadi 0.4) ---
+  const vol = 0.4 * sfxVolume;
 
   // 4. PILIH TIPE SUARA (Switch Case)
   switch (type) {
     case "tap":
-      // Suara Gameplay (Pop Lembut)
+      // Suara Gameplay (Pop lebih tebal)
       osc.type = "sine";
-      osc.frequency.setValueAtTime(600, now);
-      osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
-      gainNode.gain.setValueAtTime(vol, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+      osc.frequency.setValueAtTime(800, now); // Frekuensi awal lebih tinggi
+      osc.frequency.exponentialRampToValueAtTime(100, now + 0.15); // Turun lebih drastis
+
+      // Volume Boost
+      gainNode.gain.setValueAtTime(vol * 1.5, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
       osc.start(now);
-      osc.stop(now + 0.1);
+      osc.stop(now + 0.15);
       break;
 
     case "success":
-      // Suara Benar (Ting!)
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(400, now);
-      osc.frequency.linearRampToValueAtTime(880, now + 0.1);
-      gainNode.gain.setValueAtTime(vol, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      // Suara Benar (Ting! yang lebih Kristal)
+      osc.type = "triangle"; // Ganti ke Triangle biar lebih tajam
+      osc.frequency.setValueAtTime(500, now);
+      osc.frequency.linearRampToValueAtTime(1200, now + 0.1); // Pitch naik cepat
+
+      gainNode.gain.setValueAtTime(vol * 1.2, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4); // Sustain lebih lama
+
       osc.start(now);
-      osc.stop(now + 0.3);
+      osc.stop(now + 0.4);
       break;
 
     case "error":
-      // Suara Salah (Buzz Kasar - Sawtooth)
+      // Suara Salah (Buzz Kasar - Lebih keras)
       osc.type = "sawtooth";
       osc.frequency.setValueAtTime(150, now);
-      osc.frequency.linearRampToValueAtTime(100, now + 0.2);
-      gainNode.gain.setValueAtTime(vol * 1.5, now);
+      osc.frequency.linearRampToValueAtTime(50, now + 0.3);
+
+      gainNode.gain.setValueAtTime(vol * 2.0, now); // Boost 2x lipat
       gainNode.gain.linearRampToValueAtTime(0.01, now + 0.3);
+
       osc.start(now);
       osc.stop(now + 0.3);
       break;
 
     case "ui-click":
-      // Suara Klik UI (Diperkeras & Dipertebal)
+      // Suara Klik UI (High Tech Blip)
       osc.type = "sine";
-      // Frekuensi sedikit diturunkan agar lebih "berbobot"
-      osc.frequency.setValueAtTime(600, now);
-      osc.frequency.exponentialRampToValueAtTime(1000, now + 0.08);
+      osc.frequency.setValueAtTime(1200, now); // Lebih tinggi
+      osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
 
-      // VOLUME BOOST: Naikkan dari 0.5 menjadi 3.0
-      gainNode.gain.setValueAtTime(vol * 3.0, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      gainNode.gain.setValueAtTime(vol * 1.8, now); // Lebih keras
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
       osc.start(now);
-      osc.stop(now + 0.08);
+      osc.stop(now + 0.1);
       break;
 
     case "popup":
-      // Suara Buka Menu (Whoosh)
+      // Suara Buka Menu (Whoosh Futuristik)
       osc.type = "sine";
       osc.frequency.setValueAtTime(200, now);
-      osc.frequency.linearRampToValueAtTime(400, now + 0.15);
-      gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(vol, now + 0.05);
-      gainNode.gain.linearRampToValueAtTime(0.01, now + 0.2);
+      osc.frequency.linearRampToValueAtTime(600, now + 0.3);
+
+      gainNode.gain.setValueAtTime(0.01, now);
+      gainNode.gain.linearRampToValueAtTime(vol * 1.5, now + 0.1); // Fade in
+      gainNode.gain.linearRampToValueAtTime(0.01, now + 0.3); // Fade out
+
       osc.start(now);
-      osc.stop(now + 0.2);
+      osc.stop(now + 0.3);
       break;
 
     case "toggle":
-      // Suara Slider Geser
+      // Suara Slider (Klik pendek)
       osc.type = "square";
-      osc.frequency.setValueAtTime(300, now);
-      gainNode.gain.setValueAtTime(vol * 0.2, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.03);
+      osc.frequency.setValueAtTime(400, now);
+      gainNode.gain.setValueAtTime(vol * 0.5, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
       osc.start(now);
-      osc.stop(now + 0.03);
+      osc.stop(now + 0.05);
       break;
 
     case "win":
-      // Nada Menang
-      playTone(523.25, now, 0.1, "sine");
-      playTone(659.25, now + 0.1, 0.1, "sine");
-      playTone(783.99, now + 0.2, 0.4, "square");
+      // Nada Menang (Chord Major)
+      playTone(523.25, now, 0.2, "sine"); // C
+      playTone(659.25, now + 0.15, 0.2, "sine"); // E
+      playTone(783.99, now + 0.3, 0.6, "square"); // G (Paling keras)
       break;
 
     default:
-      // Fallback Aman (Jika typo, bunyi tap biasa, BUKAN error)
       osc.type = "sine";
       osc.frequency.value = 440;
       gainNode.gain.setValueAtTime(vol, now);
@@ -2052,3 +2091,492 @@ document.addEventListener("click", function (e) {
 document.querySelectorAll('input[type="range"]').forEach((input) => {
   input.addEventListener("input", () => playSound("toggle"));
 });
+
+// ================================================================
+// FITUR VOICE COMMAND & YOUTUBE PLAYER
+// ================================================================
+
+// [REPLACE] Ganti seluruh blok konfigurasi YouTube dengan ini
+
+// 1. Variabel Global Player
+let player;
+let isYoutubePlaying = false;
+// Tambahkan parameter &playsinline=1 dan &enablejsapi=1 di URL
+const YOUTUBE_LINK =
+  "https://youtube.com/playlist?list=PL8NGhre-uK_MnZpWNCX2l8kYvqzwy9x6b&si=mPHQRL7P5sDjdNui";
+
+function getListIdFromUrl(url) {
+  try {
+    const match = url.match(/[?&]list=([^#\&\?]+)/);
+    return match ? match[1] : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+window.onYouTubeIframeAPIReady = function () {
+  const listId = getListIdFromUrl(YOUTUBE_LINK);
+  if (!listId) return;
+
+  player = new YT.Player("youtube-player", {
+    height: "1",
+    width: "1",
+    playerVars: {
+      playsinline: 1, // KUNCI: Agar tidak fullscreen otomatis di iOS/Android
+      listType: "playlist",
+      list: listId,
+      controls: 0,
+      loop: 1,
+      autoplay: 0, // Autoplay sering diblokir browser, lebih baik trigger manual via voice
+      origin: window.location.origin,
+      enablejsapi: 1,
+    },
+    events: {
+      onStateChange: onPlayerStateChange,
+      onReady: onPlayerReady,
+    },
+  });
+};
+
+function onPlayerReady(event) {
+  // Setup Media Session (Kontrol di Notifikasi HP)
+  if ("mediaSession" in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: "Math Matrix Soundtrack",
+      artist: "Game Background Music",
+      artwork: [
+        {
+          src: "https://cdn-icons-png.flaticon.com/512/3965/3965108.png",
+          sizes: "512x512",
+          type: "image/png",
+        },
+      ],
+    });
+
+    navigator.mediaSession.setActionHandler("play", () =>
+      controlYoutube("PLAY")
+    );
+    navigator.mediaSession.setActionHandler("pause", () =>
+      controlYoutube("STOP")
+    );
+    navigator.mediaSession.setActionHandler("nexttrack", () =>
+      controlYoutube("NEXT")
+    );
+  }
+}
+
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.PLAYING) {
+    isYoutubePlaying = true;
+    if (bgmAudio) bgmAudio.pause(); // Matikan BGM game bawaan
+  } else if (event.data === YT.PlayerState.PAUSED) {
+    // Jangan set false jika pause disebabkan oleh pindah tab (sistem)
+    // Biarkan status tetap 'playing' agar kita bisa mencoba resume
+  }
+}
+
+// [BARU] Listener Agresif untuk Visibility Change
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "visible") {
+    // Saat user kembali ke tab game, PAKSA play jika tadi menyala
+    if (isYoutubePlaying && player && typeof player.playVideo === "function") {
+      player.playVideo();
+    }
+  } else {
+    // Saat user pindah tab (Hidden)
+    // Chrome Mobile mungkin akan pause otomatis di sini.
+    // Kita coba kirim perintah play lagi (Mungkin diblokir browser, tapi layak dicoba)
+    if (isYoutubePlaying && player && typeof player.playVideo === "function") {
+      setTimeout(() => {
+        player.playVideo();
+      }, 100);
+    }
+  }
+});
+
+function controlYoutube(action) {
+  if (!player || typeof player.playVideo !== "function") {
+    bicara("Player musik sedang memuat, coba sebentar lagi.");
+    return;
+  }
+
+  if (action === "PLAY") {
+    player.playVideo();
+    isYoutubePlaying = true;
+    bicara("Memutar playlist musik.");
+  } else if (action === "STOP") {
+    player.pauseVideo();
+    isYoutubePlaying = false;
+    bicara("Musik dihentikan.");
+  } else if (action === "NEXT") {
+    player.nextVideo();
+    isYoutubePlaying = true;
+    bicara("Memutar lagu selanjutnya.");
+  }
+}
+
+// 3. VOICE RECOGNITION (Pendengar Suara)
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.lang = "id-ID";
+  recognition.interimResults = true;
+
+  // SAAT DIMULAI
+  recognition.onstart = () => {
+    // Tampilkan Overlay dengan class 'show' agar animasi opacity jalan
+    document.getElementById("voice-overlay").classList.add("show");
+
+    // Ubah icon tombol melayang jadi loading spinner
+    document.getElementById("mic-icon").className =
+      "fa-solid fa-spinner fa-spin";
+
+    // Kecilkan volume game
+    if (bgmAudio) bgmAudio.volume = 0.1;
+  };
+
+  // SAAT SELESAI
+  recognition.onend = () => {
+    // Sembunyikan Overlay
+    document.getElementById("voice-overlay").classList.remove("show");
+
+    // Balikkan icon ke mic
+    document.getElementById("mic-icon").className = "fa-solid fa-microphone";
+
+    // Kembalikan volume game
+    if (bgmAudio) bgmAudio.volume = bgmVolume;
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript.toLowerCase();
+
+    // Update teks di dalam Overlay
+    document.getElementById("voice-text-preview").innerText = `"${transcript}"`;
+
+    if (event.results[0].isFinal) {
+      prosesPerintah(transcript);
+    }
+  };
+}
+
+function toggleVoiceCommand() {
+  if (!SpeechRecognition) return alert("Browser tidak support Voice Command.");
+  recognition.start();
+}
+
+function stopVoiceCommand() {
+  if (recognition) recognition.stop();
+  document.getElementById("voice-overlay").classList.remove("show");
+}
+
+// 4. PEMROSESAN PERINTAH
+function prosesPerintah(teks) {
+  console.log("Perintah:", teks);
+
+  // ===========================================
+  // 0. PRIORITAS: CEK POPUP "RESUME GAME"
+  // ===========================================
+  if (document.getElementById("resume-modal").classList.contains("show")) {
+    // OPSI A: LANJUTKAN (Sesuai mode yang dipilih)
+    if (
+      teks.includes("lanjut") ||
+      teks.includes("resume") ||
+      teks.includes("teruskan") ||
+      teks.includes("ya")
+    ) {
+      confirmResume();
+
+      // Deteksi nama game dari variabel pendingMode
+      let gameName = pendingMode ? pendingMode : "permainan";
+      // Ubah huruf awal jadi kapital biar enak didengar (opsional)
+      gameName = gameName.charAt(0).toUpperCase() + gameName.slice(1);
+
+      bicara(`Oke, melanjutkan ${gameName}.`);
+      return;
+    }
+
+    // OPSI B: MULAI BARU
+    else if (
+      teks.includes("baru") ||
+      teks.includes("ulang") ||
+      teks.includes("new") ||
+      teks.includes("hapus")
+    ) {
+      confirmNewGame();
+
+      let gameName = pendingMode ? pendingMode : "permainan";
+      bicara(`Siap, memulai ${gameName} baru dari awal.`);
+      return;
+    }
+
+    // OPSI C: BATAL
+    else if (
+      teks.includes("batal") ||
+      teks.includes("kembali") ||
+      teks.includes("tutup")
+    ) {
+      goToMenu();
+      bicara("Kembali ke menu utama.");
+      return;
+    }
+  }
+
+  // ===========================================
+  // 1. PILIH MODE PERMAINAN (BARU)
+  // ===========================================
+
+  if (
+    teks.includes("game arcade") ||
+    teks.includes("game arkade") ||
+    teks.includes("mode kilat")
+  ) {
+    startGame("arcade");
+    bicara("Siap! Memulai Mode Arcade Blitz.");
+  } else if (
+    teks.includes("game puzzle") ||
+    teks.includes("logika") ||
+    teks.includes("teka-teki")
+  ) {
+    startGame("puzzle");
+    bicara("Masuk ke Logic Puzzle. Habiskan kotaknya!");
+  } else if (
+    teks.includes("game equation") ||
+    teks.includes("persamaan") ||
+    teks.includes("hitung")
+  ) {
+    startGame("equation");
+    bicara("Mode Equation dimulai. Lengkapi rumusnya.");
+  } else if (
+    teks.includes("game crossmath") ||
+    teks.includes("game cross math") ||
+    teks.includes("silang")
+  ) {
+    startGame("crossmath");
+    bicara("Membuka Crossmath. TTS Matematika siap.");
+  }
+
+  // ===========================================
+  // 2. NAVIGASI UMUM (LANJUT/KEMBALI)
+  // ===========================================
+  else if (
+    teks.includes("lanjut") ||
+    teks.includes("resume") ||
+    teks.includes("mulai")
+  ) {
+    // Cek 1: Jika ada popup "Resume Game"
+    if (document.getElementById("resume-modal").classList.contains("show")) {
+      confirmResume();
+      bicara("Melanjutkan permainan.");
+    }
+    // Cek 2: Jika sedang di Menu Utama (Default ke Arcade jika cuma bilang "Mulai")
+    else if (
+      !document.querySelector(".game-container").classList.contains("active")
+    ) {
+      startGame("arcade");
+      bicara("Memulai permainan Arcade.");
+    }
+    // Cek 3: Jika game ter-pause (Setting terbuka)
+    else {
+      closeSettings();
+      gameState.active = true;
+      bicara("Game dilanjutkan.");
+    }
+  } else if (
+    teks.includes("kembali") ||
+    teks.includes("menu utama") ||
+    teks.includes("keluar") ||
+    teks.includes("home")
+  ) {
+    if (
+      document.querySelector(".game-container").classList.contains("active")
+    ) {
+      goToMenu();
+      bicara("Kembali ke menu utama.");
+    } else {
+      bicara("Sudah di menu utama.");
+    }
+  }
+
+  // ===========================================
+  // 3. FITUR DALAM GAME (ACAK & BANTUAN)
+  // ===========================================
+  else if (
+    teks.includes("acak") ||
+    teks.includes("shuffle") ||
+    teks.includes("kocok")
+  ) {
+    if (
+      gameState.active &&
+      (gameState.mode === "puzzle" || gameState.mode === "arcade")
+    ) {
+      shuffleBoard();
+      bicara("Papan diacak.");
+    } else {
+      bicara("Fitur acak tidak tersedia saat ini.");
+    }
+  } else if (
+    teks.includes("buka bantuan") ||
+    teks.includes("hint") ||
+    teks.includes("petunjuk")
+  ) {
+    if (gameState.active && gameState.mode === "crossmath") {
+      useHint();
+      bicara("Menggunakan satu bantuan.");
+    } else {
+      bicara("Bantuan hanya tersedia di mode Crossmath.");
+    }
+  }
+
+  // ===========================================
+  // 4. KONTROL MUSIK & SISTEM
+  // ===========================================
+  else if (
+    teks.includes("putar musik") ||
+    teks.includes("mainkan musik") ||
+    teks.includes("lagu")
+  ) {
+    controlYoutube("PLAY");
+  } else if (teks.includes("stop musik") || teks.includes("matikan musik")) {
+    controlYoutube("STOP");
+  } else if (teks.includes("ganti") || teks.includes("next")) {
+    controlYoutube("NEXT");
+  } else if (teks.includes("buka pengaturan") || teks.includes("setting")) {
+    const context = document
+      .querySelector(".game-container")
+      .classList.contains("active")
+      ? "game"
+      : "menu";
+    openSettings(context);
+    bicara("Membuka pengaturan.");
+  } else if (teks.includes("buka profil") || teks.includes("akun")) {
+    openProfile();
+    bicara("Membuka profil.");
+  } else if (teks.includes("tutup")) {
+    document
+      .querySelectorAll(".modal")
+      .forEach((el) => el.classList.remove("show"));
+    stopVoiceCommand();
+  } else {
+    bicara("Maaf, perintah tidak dikenali.");
+  }
+}
+
+// 5. FUNGSI BICARA (SUARA ROBOT BAWAAN - TANPA ELEVENLABS)
+function bicara(teks) {
+  // Matikan mic agar tidak mendengar suara sendiri
+  if (recognition) recognition.stop();
+
+  const ucapan = new SpeechSynthesisUtterance(teks);
+  ucapan.lang = "id-ID"; // Set Bahasa Indonesia
+  ucapan.rate = 1.0; // Kecepatan Bicara Normal
+  ucapan.pitch = 1.0; // Nada Normal
+
+  window.speechSynthesis.speak(ucapan);
+}
+
+// --- FITUR DIAGNOSTIK SYSTEM (PING & FPS) ---
+
+function openDiagnostics() {
+  closeSettings(); // Tutup menu setting dulu
+  document.getElementById("diag-modal").classList.add("show");
+  playSound("popup");
+  runSystemCheck();
+}
+
+function closeDiag() {
+  document.getElementById("diag-modal").classList.remove("show");
+}
+
+// [REPLACE] Ganti fungsi runSystemCheck yang lama dengan yang baru ini
+
+function runSystemCheck() {
+  const elPing = document.getElementById("diag-ping");
+  const elFps = document.getElementById("diag-fps");
+  const elLogic = document.getElementById("diag-logic"); // Elemen Baru
+  const btn = document.getElementById("btn-retest");
+
+  // Reset UI
+  elPing.textContent = "Checking...";
+  elFps.textContent = "Checking...";
+  elLogic.textContent = "Checking..."; // Reset Logic
+
+  elPing.style.color = "#fff";
+  elFps.style.color = "#fff";
+  elLogic.style.color = "#fff";
+
+  btn.disabled = true;
+  btn.textContent = "MEMPROSES...";
+
+  // 1. INFO PERANGKAT
+  document.getElementById("diag-device").textContent =
+    navigator.userAgent.slice(0, 30) + "...";
+  if (navigator.deviceMemory) {
+    document.getElementById(
+      "diag-memory"
+    ).textContent = `RAM: ~${navigator.deviceMemory} GB`;
+  } else {
+    document.getElementById("diag-memory").textContent = "RAM: Unknown";
+  }
+
+  // 2. CEK PING (Latency)
+  const startPing = Date.now();
+  fetch(window.location.href + "?t=" + startPing, {
+    cache: "no-store",
+    method: "HEAD",
+  })
+    .then(() => {
+      const latency = Date.now() - startPing;
+      elPing.textContent = latency + " ms";
+      if (latency < 100) elPing.style.color = "var(--success)";
+      else if (latency < 300) elPing.style.color = "var(--warning)";
+      else elPing.style.color = "#ff4444";
+    })
+    .catch(() => {
+      elPing.textContent = "Offline";
+      elPing.style.color = "#aaa";
+    });
+
+  // 3. CEK LOGIC SPEED (CPU Benchmark) - BARU
+  // Kita melakukan 1 juta operasi matematika dan mengukur berapa milidetik yang dibutuhkan
+  setTimeout(() => {
+    const t0 = performance.now();
+    for (let i = 0; i < 2000000; i++) {
+      // 2 Juta Loop
+      Math.sqrt(i) * Math.random();
+    }
+    const t1 = performance.now();
+    const duration = (t1 - t0).toFixed(1); // Durasi dalam ms
+
+    elLogic.textContent = duration + " ms";
+
+    // Semakin kecil ms, semakin ngebut HP-nya
+    if (duration < 15) elLogic.style.color = "var(--success)"; // HP Sultan/PC
+    else if (duration < 50)
+      elLogic.style.color = "var(--warning)"; // HP Menengah
+    else elLogic.style.color = "#ff4444"; // HP Kentang
+  }, 100);
+
+  // 4. CEK FPS
+  let frames = 0;
+  const startFpsTime = Date.now();
+
+  function loop() {
+    frames++;
+    if (Date.now() - startFpsTime >= 1000) {
+      elFps.textContent = frames;
+      if (frames >= 50) elFps.style.color = "var(--success)";
+      else if (frames >= 30) elFps.style.color = "var(--warning)";
+      else elFps.style.color = "#ff4444";
+
+      btn.disabled = false;
+      btn.textContent = "TEST ULANG";
+    } else {
+      requestAnimationFrame(loop);
+    }
+  }
+  requestAnimationFrame(loop);
+}
