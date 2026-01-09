@@ -382,13 +382,42 @@ function generateCrossmathLevel(level) {
   });
 }
 
-// script.js (Tambahkan fungsi baru ini)
-
+// [REPLACE] Ganti fungsi addScore dengan versi ini
 function addScore(amount) {
+  // Hitung level poin sebelum ditambah (kelipatan 500)
+  const oldMilestone = Math.floor(gameState.score / 500);
+
   gameState.score += amount;
   els.score.textContent = "SCORE: " + gameState.score;
 
-  // Efek visual kecil pada teks skor (opsional)
+  // Hitung level poin setelah ditambah
+  const newMilestone = Math.floor(gameState.score / 500);
+
+  // Jika melewati kelipatan 500 (misal 490 -> 540)
+  if (newMilestone > oldMilestone) {
+    // 1. Tambah resource secara background (tetap dapat meski tidak ada notif)
+    gameState.eqHints = (gameState.eqHints || 0) + 2; // +2 Hint Equation
+    gameState.hints += 1; // +1 Hint Crossmath
+
+    // 2. Update tombol UI hanya jika sedang di mode yang relevan
+    if (gameState.mode === "equation") updateHintButton();
+    if (gameState.mode === "crossmath") updateHintButton();
+
+    // 3. LOGIKA POPUP (Hanya muncul sesuai Mode)
+    if (gameState.mode === "equation") {
+      // Khusus Mode Equation: Tampilkan notif +2
+      showAlert("BONUS!", "Poin 500+! Dapat +2 Bantuan.");
+      playSound("success");
+    } else if (gameState.mode === "crossmath") {
+      // Khusus Mode Crossmath: Tampilkan notif +1 (agar relevan)
+      showAlert("BONUS!", "Poin 500+! Dapat +1 Bantuan.");
+      playSound("success");
+    }
+    // Mode Arcade & Puzzle: TIDAK ADA POPUP (Silent Bonus)
+    // Agar tidak mengganggu gameplay yang cepat.
+  }
+
+  // Animasi Score
   els.score.style.transform = "scale(1.2)";
   els.score.style.color = "#fff";
   setTimeout(() => {
@@ -445,26 +474,28 @@ function confirmNewGame() {
   startWithLoading(false);
 }
 
+// [UPDATE] Tambahkan inisialisasi eqHints di dalam initNewGame
 function initNewGame(mode, keepState = false) {
-  // Jika keepState true (Lanjut Level), level dan score tidak di-reset
   if (!keepState) {
     gameState = {
       mode: mode,
       active: true,
       score: 0,
-      level: 1, // Reset level hanya jika game baru
+      level: 1,
       target: 0,
-      hints: 3,
+      hints: 3, // Hint Crossmath default
+      eqHints: 2, // Hint Equation default (Mulai dengan 2)
       isResumed: false,
       selectedTiles: [],
       tiles: [],
     };
   } else {
-    // Hanya reset state papan, tapi pertahankan level & score
     gameState.active = true;
     gameState.selectedTiles = [];
     gameState.tiles = [];
     gameState.isResumed = false;
+    // Pastikan eqHints ada jika lanjut dari save lama yang belum punya variabel ini
+    if (typeof gameState.eqHints === "undefined") gameState.eqHints = 2;
   }
 
   setupUIForGame(mode);
@@ -596,11 +627,15 @@ function gameOver(msg) {
 }
 
 function restartGame() {
-  els.modal.classList.remove("show");
+  els.modal.classList.remove("show"); // Tutup modal
 
   // Cek apakah pemain Menang atau Kalah dari judul Modal
-  const title = document.getElementById("modal-title").textContent;
-  const isWin = title.includes("COMPLETE") || title.includes("CLEARED");
+  const titleEl = document.getElementById("modal-title");
+  const title = titleEl ? titleEl.textContent : "";
+  const isWin =
+    title.includes("COMPLETE") ||
+    title.includes("CLEARED") ||
+    title.includes("SCORE");
 
   if (isWin) {
     // Jika Menang, Lanjut ke Level berikutnya (keepState = true)
@@ -674,84 +709,86 @@ function initPuzzle() {
   }
 }
 
+// [REPLACE] Ganti fungsi startPuzzleLevel dengan versi stabil ini
 function startPuzzleLevel() {
-  // Target difficulty scaling
-  const minTarget = 8 + gameState.level * 2;
-  const maxTarget = 15 + gameState.level * 3;
+  // 1. Tentukan Target (Difficulty Scaling)
+  const minTarget = 10 + gameState.level * 2;
+  const maxTarget = 20 + gameState.level * 4;
   gameState.target =
     Math.floor(Math.random() * (maxTarget - minTarget + 1)) + minTarget;
-  els.targetVal.textContent = gameState.target;
+
+  // Update Teks Target di UI
+  if (els.targetVal) els.targetVal.textContent = gameState.target;
 
   let vals = [];
 
-  // --- PERBAIKAN LOGIKA: 12 PASANG + 1 BONUS ---
-  // Total 25 kotak. Kita buat 12 pasang (12 x 2 = 24 kotak).
-  // Sisa 1 kotak diisi angka Target itu sendiri (Bonus langsung klik).
-
-  // 1. Masukkan Bonus (Angka Target)
+  // 2. Masukkan Bonus (Angka Target itu sendiri)
   vals.push(gameState.target);
 
-  // 2. Buat 12 Pasang (A + B = Target)
+  // 3. Buat 12 Pasang Angka (A + B = Target)
   for (let i = 0; i < 12; i++) {
-    let a = Math.floor(Math.random() * (gameState.target - 1)) + 1;
+    // Range A: 1 sampai (Target - 1) agar B tidak nol
+    // Proteksi: Jika target terlalu kecil, fallback ke 1
+    let maxA = Math.max(1, gameState.target - 1);
+    let a = Math.floor(Math.random() * maxA) + 1;
     let b = gameState.target - a;
     vals.push(a, b);
   }
 
-  // Acak posisi
+  // 4. Acak Posisi
   vals.sort(() => Math.random() - 0.5);
+
+  // 5. Build Grid Secara Langsung
   buildGrid(vals);
+
+  // --- FIX: Simpan state segera setelah generate agar tidak hilang ---
+  saveGameState();
 }
 
-// --- EQUATION MODE ---
+// [REPLACE] Ganti fungsi initEquation dengan ini
 function initEquation() {
   els.grid.style.gridTemplateColumns = "repeat(5, 1fr)";
   els.eqBox.classList.add("active");
   els.levelInfo.textContent = `EQUATION - LEVEL ${gameState.level}`;
 
-  // UBAH BAGIAN INI: Logika Resume yang sebenarnya
+  // TAMPILKAN TOMBOL HINT (Fitur Baru)
+  els.hintBtn.style.display = "flex";
+  updateHintButton();
+
   if (
     gameState.isResumed &&
     gameState.equationData &&
     gameState.restoredTilesData
   ) {
-    // Ambil data soal yang tersimpan
     const eq = gameState.equationData;
-
-    // Tulis ulang HTML kotak soal berdasarkan data simpanan
-    els.eqBox.innerHTML = `<div class="eq-part">${eq.a}</div><div class="eq-part">+</div><div class="eq-part">${eq.b}</div><div class="eq-part">=</div><div class="eq-part eq-slot" id="eq-target-slot">?</div>`;
-
-    // Kembalikan kotak-kotak angka
+    els.eqBox.innerHTML = `<div class="eq-part">${eq.a}</div><div class="eq-part">${eq.op}</div><div class="eq-part">${eq.b}</div><div class="eq-part">=</div><div class="eq-part eq-slot" id="eq-target-slot">?</div>`;
     restoreGridTiles();
-
     gameState.isResumed = false;
   } else {
     startEquationLevel();
   }
 }
 
-// [REPLACE] Ganti seluruh fungsi startEquationLevel dengan ini:
-
+// [REPLACE] Ganti fungsi startEquationLevel dengan versi ini
 function startEquationLevel() {
   els.levelInfo.textContent = `EQUATION - LEVEL ${gameState.level}`;
+
+  // RESET: Izinkan bantuan dipakai lagi di level baru ini
+  gameState.eqHintUsedInLevel = false;
 
   let level = gameState.level;
   let a, b, ans, op;
   let operators = ["+"];
 
-  // Level 3+ muncul pengurangan
+  // Unlock Operator sesuai Level
   if (level >= 3) operators.push("-");
-  // Level 5+ muncul perkalian
   if (level >= 5) operators.push("x");
-  // Level 7+ muncul pembagian (BARU DITAMBAHKAN)
   if (level >= 7) operators.push("/");
 
-  // Pilih operator acak
   op = operators[Math.floor(Math.random() * operators.length)];
+  let maxNum = 12 + level * 2;
 
-  // Tentukan range angka berdasarkan level
-  let maxNum = 10 + level * 2;
-
+  // --- GENERATOR SOAL ---
   if (op === "+") {
     a = Math.floor(Math.random() * maxNum) + 1;
     b = Math.floor(Math.random() * maxNum) + 1;
@@ -766,47 +803,45 @@ function startEquationLevel() {
     b = Math.floor(Math.random() * maxMult) + 2;
     ans = a * b;
   } else if (op === "/") {
-    // --- LOGIKA PEMBAGIAN (BARU) ---
-    // Agar hasil bulat: Kita tentukan Jawaban & Pembagi dulu, baru dikali jadi Soal.
-    // Contoh: Mau soal ? / 5 = 3. Maka A harus 15.
-
-    b = Math.floor(Math.random() * 10) + 2; // Pembagi (2 s.d 11)
-    ans = Math.floor(Math.random() * 10) + 2; // Jawaban (2 s.d 11)
-    a = b * ans; // Angka depan (Dividend)
+    b = Math.floor(Math.random() * 10) + 2;
+    ans = Math.floor(Math.random() * 10) + 2;
+    a = b * ans;
   }
 
-  // Simpan data soal
+  // Simpan data
   gameState.equationData = { a: a, b: b, answer: ans, op: op };
 
-  // Update HTML Tampilan Soal
+  // Update Tampilan Soal
   els.eqBox.innerHTML = `<div class="eq-part">${a}</div><div class="eq-part">${op}</div><div class="eq-part">${b}</div><div class="eq-part">=</div><div class="eq-part eq-slot" id="eq-target-slot">?</div>`;
 
-  // Buat Grid Jawaban
-  let gridVals = [ans];
-  while (gridVals.length < 25) {
+  // --- GENERATOR GRID JAWABAN ---
+  let gridVals = [];
+
+  // 1. Isi 24 Angka Pengecoh
+  for (let i = 0; i < 24; i++) {
     let fake;
-    // Buat pengecoh cerdas
     if (Math.random() > 0.5) {
-      fake = ans + Math.floor(Math.random() * 10) - 5;
+      fake = ans + (Math.floor(Math.random() * 21) - 10);
     } else {
-      fake = Math.floor(Math.random() * (level * 5)) + 1;
+      fake = Math.floor(Math.random() * 50) + 1;
     }
 
-    if (fake !== ans && fake > 0 && !gridVals.includes(fake)) {
-      gridVals.push(fake);
-    } else if (gridVals.length < 25) {
-      // Fallback jika fake angka kembar/negatif
-      gridVals.push(gridVals.length + 100);
+    if (fake <= 0 || fake === ans) {
+      fake = ans + 1 + Math.floor(Math.random() * 5);
     }
+    gridVals.push(fake);
   }
 
-  // Acak posisi
+  // 2. Masukkan Jawaban Benar
+  gridVals.push(ans);
+
+  // 3. Acak Posisi Grid
   gridVals.sort(() => Math.random() - 0.5);
-  // Potong jika kelebihan (safety)
-  if (gridVals.length > 25) gridVals = gridVals.slice(0, 25);
 
   buildGrid(gridVals);
   saveGameState();
+
+  updateHintButton();
 }
 
 function checkEquationAnswer(tileObj) {
@@ -1145,8 +1180,14 @@ function checkSum() {
 }
 
 function updateHintButton() {
-  if (els.hintBtn)
-    els.hintBtn.querySelector(".hint-badge").textContent = gameState.hints;
+  if (!els.hintBtn) return;
+  const badge = els.hintBtn.querySelector(".hint-badge");
+
+  if (gameState.mode === "crossmath") {
+    badge.textContent = gameState.hints;
+  } else if (gameState.mode === "equation") {
+    badge.textContent = gameState.eqHints || 0;
+  }
 }
 
 function updateShuffleBtn() {
@@ -1170,16 +1211,58 @@ function shuffleBoard() {
   playSound("tap");
 }
 
+// [REPLACE] Ganti fungsi useHint dengan versi ini
 function useHint() {
-  if (gameState.hints <= 0) {
-    showAlert(
-      "BANTUAN HABIS!",
-      "Kamu sudah menggunakan semua bantuan level ini."
-    );
+  // --- MODE CROSSMATH (Tetap sama) ---
+  if (gameState.mode === "crossmath") {
+    if (gameState.hints <= 0) {
+      showAlert("BANTUAN HABIS!", "Selesaikan level atau dapatkan 500 poin.");
+      return;
+    }
+    useCrossmathHintLogic();
     return;
   }
 
-  // Cari slot yang kosong atau salah
+  // --- MODE EQUATION (Logika Baru) ---
+  if (gameState.mode === "equation") {
+    // 1. Cek Limit Per Level
+    if (gameState.eqHintUsedInLevel) {
+      showAlert("BATAS TERCAPAI", "Bantuan hanya bisa 1x per level!");
+      return;
+    }
+
+    // 2. Cek Stok Hint
+    if (!gameState.eqHints || gameState.eqHints <= 0) {
+      showAlert("BANTUAN HABIS!", "Kumpulkan 500 poin untuk dapat +2 bantuan.");
+      return;
+    }
+
+    // 3. Eksekusi Bantuan (Auto-Answer)
+    gameState.eqHints--;
+    gameState.eqHintUsedInLevel = true; // Tandai sudah dipakai
+    updateHintButton();
+
+    // Langsung isi slot jawaban di UI
+    const slot = document.getElementById("eq-target-slot");
+    const correctAnswer = gameState.equationData.answer;
+
+    slot.textContent = correctAnswer; // Isi angka
+    slot.classList.add("filled"); // Ubah warna jadi kuning (filled style)
+
+    playSound("success");
+    addScore(50); // Tambah skor
+
+    // Lanjut ke level berikutnya (simulasi menang)
+    setTimeout(() => {
+      gameState.level++;
+      startEquationLevel();
+    }, 1000);
+  }
+}
+
+// --- HELPER LOGIC UNTUK CROSSMATH ---
+function useCrossmathHintLogic() {
+  // 1. Cari slot yang kosong atau salah
   let targets = [];
   currentGridLayout.forEach((cell, i) => {
     if (cell.type === "input") {
@@ -1189,28 +1272,31 @@ function useHint() {
     }
   });
 
-  if (targets.length === 0) return;
+  if (targets.length === 0) return; // Semua sudah benar
 
+  // 2. Pilih satu target acak
   const targetIdx = targets[Math.floor(Math.random() * targets.length)];
   const correctVal = currentGridLayout[targetIdx].answer;
 
-  // Jika slot sudah terisi (salah), kembalikan ke bank
+  // 3. Jika slot sudah terisi (salah), kembalikan item lama ke bank
   if (userState[targetIdx] !== null) {
     const oldBankId = userState[targetIdx].bankId;
     const oldBankItem = crossBank.find((b) => b.id === oldBankId);
     if (oldBankItem) oldBankItem.used = false;
   }
 
-  // Cari angka yang benar di bank
+  // 4. Cari angka yang benar di bank
   const correctBankItem = crossBank.find((b) => b.val == correctVal && !b.used);
 
   if (correctBankItem) {
+    // Pasang jawaban benar
     userState[targetIdx] = {
       val: correctBankItem.val,
       bankId: correctBankItem.id,
     };
     correctBankItem.used = true;
 
+    // Kurangi Hint & Update UI
     gameState.hints--;
     updateHintButton();
 
@@ -1219,16 +1305,23 @@ function useHint() {
     renderBank();
     renderCrossGrid();
 
-    // Cek win condition
+    // Cek Kemenangan Langsung
     const allCorrect = currentGridLayout.every((c, i) => {
       if (c.type !== "input") return true;
       return userState[i] && userState[i].val == c.answer;
     });
-    if (allCorrect)
+
+    if (allCorrect) {
       setTimeout(() => {
         gameState.level++;
+        // Reset hint state crossmath jika naik level (opsional, bisa dihapus jika ingin akumulasi)
+        gameState.hints = 3;
         gameOver("LEVEL COMPLETE!");
       }, 500);
+    }
+  } else {
+    // Kasus langka: Angka di bank habis/tidak ada (seharusnya tidak terjadi di logika normal)
+    showAlert("OOPS", "Angka yang dibutuhkan tidak ditemukan di bank.");
   }
 }
 
